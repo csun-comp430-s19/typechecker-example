@@ -21,7 +21,7 @@ type ::= int | char | void | bool | // basic primitive types
 op ::= + | - | * | / | == | <
 lhs ::= var | lhs.field | *lhs // used on left-hand side of assignment
 exp ::= i | c | true | false | var |
-        malloc(i) | // allocates i bytes of memory. Runtime error if i <= 0.
+        malloc(exp) | // allocates a number of bytes of memory. Runtime error if parameter <= 0
         free(exp) | // frees memory
         sizeof(type) | // returns the number of bytes a value of type "type" consumes
         exp op exp |
@@ -40,6 +40,7 @@ stmt ::= if (exp) { stmt } else { stmt } |
          lhs = exp | // assignment
          return | // return void
          return exp | // return a value
+         stmt ; stmt // one statement followed by another
 structDec ::= sn { varDec* }
 fDef ::= type fn(varDec*) { stmt }
 program ::= structDec* fDef*
@@ -53,3 +54,4 @@ The typechecker and related semantic analysis needs to check:
 - Structure field access accesses existant fields
 - Functions return expected types
 - Used variables have been declared
+- `break` and `continue` are used within the body of `while`
