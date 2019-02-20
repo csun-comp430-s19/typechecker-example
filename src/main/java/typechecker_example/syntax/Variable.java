@@ -1,16 +1,11 @@
-package typechecker_example;
+package typechecker_example.syntax;
 
-public class Variable {
-    public final String name;
-
+public class Variable extends Name {
     public Variable(final String name) {
-        this.name = name;
+        super(name);
     }
 
-    public int hashCode() { return name.hashCode(); }
-    public boolean equals(final Object other) {
-        return (other instanceof Variable &&
-                ((Variable)other).name.equals(name));
+    public boolean sameClass(final Name other) {
+        return other instanceof Variable;
     }
-    public String toString() { return name; }
 }
