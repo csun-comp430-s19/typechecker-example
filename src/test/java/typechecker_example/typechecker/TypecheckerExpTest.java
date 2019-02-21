@@ -6,7 +6,13 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertEquals;
 import org.junit.Test;
 
-public class TypecheckerTest {
+// Tests for expressions that need no scopes.
+// This means:
+// -No variables
+// -No structures
+// -No functions
+// -No pointers (which depend on variables or structures)
+public class TypecheckerExpTest {
     // use null if there should be a type error
     public void assertExpType(final Type expected, final Exp exp) {
         try {
@@ -38,8 +44,6 @@ public class TypecheckerTest {
                       new BoolExp(true));
     }
 
-    // TODO: variables need a scope
-
     @Test
     public void testMallocWithInt() {
         assertExpType(new PointerType(new VoidType()),
@@ -65,8 +69,6 @@ public class TypecheckerTest {
                                    new PlusOp(),
                                    new IntExp(2)));
     }
-
-    // TODO: need variables to get pointers
 
     @Test
     public void testBinopPlusNonIntOrPointer() {
@@ -156,7 +158,6 @@ public class TypecheckerTest {
                                    new IntExp(0)));
     }
 
-    // TODO: structure creation needs scope
     // TODO: function calls need scope
 
     @Test
