@@ -117,9 +117,15 @@ public class Typechecker {
     }
     
     private void typecheckFunctionDef(final FunctionDefinition fdef) throws TypeErrorException {
-        new InScope(fdef.returnType,
-                    initialVariableMapping(fdef.parameters),
-                    false).typecheckStmt(fdef.body);
+        final InScope initialScope = new InScope(fdef.returnType,
+                                                 initialVariableMapping(fdef.parameters),
+                                                 false);
+        final Pair<InScope, Boolean> stmtResult = initialScope.typecheckStmt(fdef.body);
+
+        if (!stmtResult.second.booleanValue() &&
+            !(fdef.returnType instanceof VoidType)) {
+            throw new TypeErrorException("Missing return in " + fdef.name.toString());
+        }
     }
 
     // error if duplicate variable names are used
