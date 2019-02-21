@@ -22,7 +22,6 @@ op ::= + | - | * | / | == | <
 lhs ::= var | lhs.field | *lhs // used on left-hand side of assignment
 exp ::= i | c | true | false | var |
         malloc(exp) | // allocates a number of bytes of memory. Runtime error if parameter <= 0
-        free(exp) | // frees memory
         sizeof(type) | // returns the number of bytes a value of type "type" consumes
         exp op exp |
         sn(exp*) | // creates a structure on the stack
@@ -40,6 +39,7 @@ stmt ::= if (exp) { stmt } else { stmt } |
          lhs = exp | // assignment
          return | // return void
          return exp | // return a value
+         free(exp) | // frees memory
          stmt ; stmt // one statement followed by another
 structDec ::= sn { varDec* }
 fDef ::= type fn(varDec*) { stmt }
