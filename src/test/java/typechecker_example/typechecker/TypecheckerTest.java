@@ -51,4 +51,132 @@ public class TypecheckerTest {
         assertExpType(null,
                       new MallocExp(new BoolExp(false)));
     }
+
+    @Test
+    public void testSizeof() {
+        assertExpType(new IntType(),
+                      new SizeofExp(new BoolType()));
+    }
+
+    @Test
+    public void testBinopPlusInts() {
+        assertExpType(new IntType(),
+                      new BinopExp(new IntExp(1),
+                                   new PlusOp(),
+                                   new IntExp(2)));
+    }
+
+    // TODO: need variables to get pointers
+
+    @Test
+    public void testBinopPlusNonIntOrPointer() {
+        assertExpType(null,
+                      new BinopExp(new CharExp('a'),
+                                   new PlusOp(),
+                                   new IntExp(1)));
+    }
+
+    @Test
+    public void testMinusInts() {
+        assertExpType(new IntType(),
+                      new BinopExp(new IntExp(1),
+                                   new MinusOp(),
+                                   new IntExp(2)));
+    }
+
+    @Test
+    public void testMinusNonInts() {
+        assertExpType(null,
+                      new BinopExp(new IntExp(1),
+                                   new MinusOp(),
+                                   new CharExp('a')));
+    }
+
+    @Test
+    public void testMultInts() {
+        assertExpType(new IntType(),
+                      new BinopExp(new IntExp(1),
+                                   new MultOp(),
+                                   new IntExp(2)));
+    }
+
+    @Test
+    public void testMultNonInts() {
+        assertExpType(null,
+                      new BinopExp(new IntExp(1),
+                                   new MultOp(),
+                                   new CharExp('a')));
+    }
+
+    @Test
+    public void testDivInts() {
+        assertExpType(new IntType(),
+                      new BinopExp(new IntExp(1),
+                                   new DivOp(),
+                                   new IntExp(2)));
+    }
+
+    @Test
+    public void testDivNonInts() {
+        assertExpType(null,
+                      new BinopExp(new IntExp(1),
+                                   new DivOp(),
+                                   new CharExp('a')));
+    }
+
+    @Test
+    public void testEqualSameType() {
+        assertExpType(new BoolType(),
+                      new BinopExp(new CharExp('a'),
+                                   new EqualsOp(),
+                                   new CharExp('b')));
+    }
+
+    @Test
+    public void testEqualDifferentTypes() {
+        assertExpType(null,
+                      new BinopExp(new CharExp('a'),
+                                   new EqualsOp(),
+                                   new IntExp(1)));
+    }
+
+    @Test
+    public void testLessThanInts() {
+        assertExpType(new BoolType(),
+                      new BinopExp(new IntExp(1),
+                                   new LessThanOp(),
+                                   new IntExp(0)));
+    }
+
+    @Test
+    public void testLessThanNonInts() {
+        assertExpType(null,
+                      new BinopExp(new CharExp('a'),
+                                   new LessThanOp(),
+                                   new IntExp(0)));
+    }
+
+    // TODO: structure creation needs scope
+    // TODO: function calls need scope
+
+    @Test
+    public void testCastWellTypedSubexpression() {
+        assertExpType(new IntType(),
+                      new CastExp(new IntType(),
+                                  new CharExp('a')));
+    }
+
+    @Test
+    public void testCastIllTypedSubexpression() {
+        assertExpType(null,
+                      new CastExp(new CharType(),
+                                  new BinopExp(new IntExp(1),
+                                               new PlusOp(),
+                                               new CharExp('a'))));
+    }
+
+    // TODO: address-of needs scope
+    // TODO: field access needs scope
+    // TODO: typecheck statements
+    // TODO: functions
 } // TypecheckerTest
