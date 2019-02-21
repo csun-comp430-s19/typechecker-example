@@ -389,28 +389,36 @@ public class Typechecker {
             }
         } // typeofExp
 
-        // returns any new scope to use
-        public InScope typecheckStmt(final Stmt stmt) throws TypeErrorException {
+        // returns any new scope to use, along with whether or not return was observed on
+        // all paths
+        public Pair<InScope, Boolean> typecheckStmt(final Stmt stmt) throws TypeErrorException {
             if (stmt instanceof IfStmt) {
                 final IfStmt asIf = (IfStmt)stmt;
                 ensureTypesSame(new BoolType(), typeofExp(asIf.guard));
 
                 // since the true and false branches form their own blocks, we
                 // don't care about any variables they put in scope
-                typecheckStmt(asIf.ifTrue);
-                typecheckStmt(asIf.ifFalse);
-                return this;
+                final Pair<InScope, Boolean> leftResult = typecheckStmt(asIf.ifTrue);
+                final Pair<InScope, Boolean> rightResult = typecheckStmt(asIf.ifFalse);
+                final boolean returnOnBoth =
+                    leftResult.second.booleanValue() && rightResult.second.booleanValue();
+                return new Pair<InScope, Boolean>(this, returnOnBoth);
             } else if (stmt instanceof WhileStmt) {
                 final WhileStmt asWhile = (WhileStmt)stmt;
                 ensureTypesSame(new BoolType(), typeofExp(asWhile.guard));
+
+                // Don't care about variables in the while.
+                // Because the body of the while loop will never execute if the condition is
+                // initially false, even if all paths in the while loop have return, this doesn't
+                // mean that we are guaranteed to hit return.
                 setInWhile().typecheckStmt(asWhile.body);
-                return this;
+                return new Pair<InScope, Boolean>(this, Boolean.valueOf(false));
             } else if (stmt instanceof BreakStmt ||
                        stmt instanceof ContinueStmt) {
                 if (!inWhile) {
                     throw new TypeErrorException("Break or continue outside of loop");
                 }
-                return this;
+                return new Pair<InScope, Boolean>(this, Boolean.valueOf(false));
             } else if (stmt instanceof VariableDeclarationInitializationStmt) {
                 final VariableDeclarationInitializationStmt dec =
                     (VariableDeclarationInitializationStmt)stmt;
@@ -418,22 +426,29 @@ public class Typechecker {
                 ensureNonVoidType(expectedType);
                 ensureTypesSame(expectedType,
                                 typeofExp(dec.exp));
-                return addVariable(dec.varDec.variable, expectedType);
+                final InScope resultInScope =
+                    addVariable(dec.varDec.variable, expectedType);
+                return new Pair<InScope, Boolean>(resultInScope, Boolean.valueOf(false));
             } else if (stmt instanceof ReturnVoidStmt) {
                 ensureTypesSame(new VoidType(), returnType);
-                return this;
+                return new Pair<InScope, Boolean>(this, Boolean.valueOf(true));
             } else if (stmt instanceof ReturnExpStmt) {
                 final Type receivedType = typeofExp(((ReturnExpStmt)stmt).exp);
                 ensureTypesSame(returnType, receivedType);
-                return this;
+                return new Pair<InScope, Boolean>(this, Boolean.valueOf(true));
             } else if (stmt instanceof FreeStmt) {
                 ensureTypesSame(new PointerType(new VoidType()),
                                 typeofExp(((FreeStmt)stmt).value));
-                return this;
+                return new Pair<InScope, Boolean>(this, Boolean.valueOf(false));
             } else if (stmt instanceof SequenceStmt) {
                 final SequenceStmt asSeq = (SequenceStmt)stmt;
-                final InScope fromLeft = typecheckStmt(asSeq.first);
-                return fromLeft.typecheckStmt(asSeq.second);
+                final Pair<InScope, Boolean> fromLeft = typecheckStmt(asSeq.first);
+                
+                if (fromLeft.second.booleanValue()) {
+                    throw new TypeErrorException("Dead code from early return");
+                }
+
+                return fromLeft.first.typecheckStmt(asSeq.second);
             } else {
                 assert(false);
                 throw new TypeErrorException("Unrecognized statement: " + stmt.toString());
