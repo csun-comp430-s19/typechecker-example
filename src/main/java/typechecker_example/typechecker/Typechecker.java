@@ -24,6 +24,14 @@ public class Typechecker {
         }
     }
 
+    // intended for testing
+    public static Type expTypeForTesting(final Exp exp) throws TypeErrorException {
+        final Typechecker checker =
+            new Typechecker(new Program(new StructureDeclaration[0],
+                                        new FunctionDefinition[0]));
+        return checker.expTypeNoScopeForTesting(exp);
+    }
+    
     public static void typecheckProgram(final Program program) throws TypeErrorException {
         new Typechecker(program);
     }
@@ -217,6 +225,13 @@ public class Typechecker {
             throw new TypeErrorException("Unknown operator: " + op.toString());
         }
     } // binopType
+
+    // intended for testing
+    private Type expTypeNoScopeForTesting(final Exp exp) throws TypeErrorException {
+        return new InScope(new VoidType(),
+                           new HashMap<Variable, Type>(),
+                           false).typeofExp(exp);
+    }
     
     private class InScope {
         // return type of the function we are currently in
@@ -313,7 +328,7 @@ public class Typechecker {
             return varType;
         }
         
-        private Type typeofExp(final Exp exp) throws TypeErrorException {
+        public Type typeofExp(final Exp exp) throws TypeErrorException {
             if (exp instanceof IntExp) {
                 return new IntType();
             } else if (exp instanceof CharExp) {
