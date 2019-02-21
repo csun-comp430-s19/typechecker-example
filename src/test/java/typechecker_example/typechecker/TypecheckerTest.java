@@ -16,13 +16,39 @@ public class TypecheckerTest {
             assertEquals(expected, received);
         } catch (final TypeErrorException e) {
             assertTrue("Unexpected type error: " + e.getMessage(),
-                       exp == null);
+                       expected == null);
         }
     }
 
     @Test
-    public void testIntExp() throws TypeErrorException {
+    public void testIntExp() {
         assertExpType(new IntType(),
                       new IntExp(42));
+    }
+
+    @Test
+    public void testCharExp() {
+        assertExpType(new CharType(),
+                      new CharExp('a'));
+    }
+
+    @Test
+    public void testBoolExp() {
+        assertExpType(new BoolType(),
+                      new BoolExp(true));
+    }
+
+    // TODO: variables need a scope
+
+    @Test
+    public void testMallocWithInt() {
+        assertExpType(new PointerType(new VoidType()),
+                      new MallocExp(new IntExp(42)));
+    }
+
+    @Test
+    public void testMallocWithNonInt() {
+        assertExpType(null,
+                      new MallocExp(new BoolExp(false)));
     }
 } // TypecheckerTest
