@@ -158,8 +158,6 @@ public class TypecheckerExpTest {
                                    new IntExp(0)));
     }
 
-    // TODO: function calls need scope
-
     @Test
     public void testCastWellTypedSubexpression() {
         assertExpType(new IntType(),
@@ -176,8 +174,5 @@ public class TypecheckerExpTest {
                                                new CharExp('a'))));
     }
 
-    // TODO: address-of needs scope
-    // TODO: field access needs scope
     // TODO: typecheck statements
-    // TODO: functions
 } // TypecheckerTest

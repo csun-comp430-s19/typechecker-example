@@ -327,7 +327,6 @@ public class TypecheckerScopeTest {
         Typechecker.typecheckProgram(prog);
     }
 
-    /*
     @Test
     public void testNormalFunctionCall() throws TypeErrorException {
         // int blah(int x, char y) {
@@ -349,7 +348,125 @@ public class TypecheckerScopeTest {
             new FunctionDefinition(new VoidType(),
                                    new FunctionName("foo"),
                                    EMPTY_VARDECS,
-                                   // TODO: STOPPED HERE
-                                   // Expression statements are needed
-                                   */
+                                   new ExpStmt(new FunctionCallExp(new FunctionName("blah"),
+                                                                   new Exp[]{
+                                                                       new IntExp(7),
+                                                                       new CharExp('a')
+                                                                   })));
+        final Program prog = new Program(EMPTY_STRUCTURES,
+                                         new FunctionDefinition[]{blah, foo});
+        Typechecker.typecheckProgram(prog);
+    }
+
+    @Test(expected = TypeErrorException.class)
+    public void testFunctionCallNotEnoughParams() throws TypeErrorException {
+        // int blah(int x, char y) {
+        //   return 7;
+        // }
+        // void foo() {
+        //   blah(7);
+        // }
+        final FunctionDefinition blah =
+            new FunctionDefinition(new IntType(),
+                                   new FunctionName("blah"),
+                                   new VariableDeclaration[]{
+                                       new VariableDeclaration(new IntType(), new Variable("x")),
+                                       new VariableDeclaration(new CharType(), new Variable("y"))
+                                   },
+                                   new ReturnExpStmt(new IntExp(7)));
+        final FunctionDefinition foo =
+            new FunctionDefinition(new VoidType(),
+                                   new FunctionName("foo"),
+                                   EMPTY_VARDECS,
+                                   new ExpStmt(new FunctionCallExp(new FunctionName("blah"),
+                                                                   new Exp[]{
+                                                                       new IntExp(7)
+                                                                   })));
+        final Program prog = new Program(EMPTY_STRUCTURES,
+                                         new FunctionDefinition[]{blah, foo});
+        Typechecker.typecheckProgram(prog);
+    }
+        
+    @Test(expected = TypeErrorException.class)
+    public void testFunctionCallTooManyParams() throws TypeErrorException {
+        // int blah(int x, char y) {
+        //   return 7;
+        // }
+        // void foo() {
+        //   blah(7, 'a', true);
+        // }
+
+        final FunctionDefinition blah =
+            new FunctionDefinition(new IntType(),
+                                   new FunctionName("blah"),
+                                   new VariableDeclaration[]{
+                                       new VariableDeclaration(new IntType(), new Variable("x")),
+                                       new VariableDeclaration(new CharType(), new Variable("y"))
+                                   },
+                                   new ReturnExpStmt(new IntExp(7)));
+        final FunctionDefinition foo =
+            new FunctionDefinition(new VoidType(),
+                                   new FunctionName("foo"),
+                                   EMPTY_VARDECS,
+                                   new ExpStmt(new FunctionCallExp(new FunctionName("blah"),
+                                                                   new Exp[]{
+                                                                       new IntExp(7),
+                                                                       new CharExp('a'),
+                                                                       new BoolExp(true)
+                                                                   })));
+        final Program prog = new Program(EMPTY_STRUCTURES,
+                                         new FunctionDefinition[]{blah, foo});
+        Typechecker.typecheckProgram(prog);
+    }
+
+    @Test(expected = TypeErrorException.class)
+    public void testFunctionCallWrongTypes() throws TypeErrorException {
+        // int blah(int x, char y) {
+        //   return 7;
+        // }
+        // void foo() {
+        //   blah('a', y);
+        // }
+
+        final FunctionDefinition blah =
+            new FunctionDefinition(new IntType(),
+                                   new FunctionName("blah"),
+                                   new VariableDeclaration[]{
+                                       new VariableDeclaration(new IntType(), new Variable("x")),
+                                       new VariableDeclaration(new CharType(), new Variable("y"))
+                                   },
+                                   new ReturnExpStmt(new IntExp(7)));
+        final FunctionDefinition foo =
+            new FunctionDefinition(new VoidType(),
+                                   new FunctionName("foo"),
+                                   EMPTY_VARDECS,
+                                   new ExpStmt(new FunctionCallExp(new FunctionName("blah"),
+                                                                   new Exp[]{
+                                                                       new CharExp('a'),
+                                                                       new IntExp(7)
+                                                                   })));
+        final Program prog = new Program(EMPTY_STRUCTURES,
+                                         new FunctionDefinition[]{blah, foo});
+        Typechecker.typecheckProgram(prog);
+    }
+
+    @Test(expected = TypeErrorException.class)
+    public void testFunctionCallNonexistent() throws TypeErrorException {
+        // void foo() {
+        //   blah(7, 'a');
+        // }
+
+        final FunctionDefinition foo =
+            new FunctionDefinition(new VoidType(),
+                                   new FunctionName("foo"),
+                                   EMPTY_VARDECS,
+                                   new ExpStmt(new FunctionCallExp(new FunctionName("blah"),
+                                                                   new Exp[]{
+                                                                       new IntExp(7),
+                                                                       new CharExp('a')
+                                                                   })));
+        final Program prog = new Program(EMPTY_STRUCTURES,
+                                         new FunctionDefinition[]{foo});
+        Typechecker.typecheckProgram(prog);
+    }
 }
