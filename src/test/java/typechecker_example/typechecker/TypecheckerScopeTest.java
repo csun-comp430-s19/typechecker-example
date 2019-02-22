@@ -24,6 +24,16 @@ public class TypecheckerScopeTest {
     public static VariableDeclarationInitializationStmt def(final Type type, final String name, final Exp exp) {
         return new VariableDeclarationInitializationStmt(new VariableDeclaration(type, new Variable(name)), exp);
     }
+
+    // void foo() {
+    //   body
+    // }
+    public static FunctionDefinition voidFunction(final Stmt body) {
+        return new FunctionDefinition(new VoidType(),
+                                      new FunctionName("foo"),
+                                      EMPTY_VARDECS,
+                                      body);
+    }
     
     @Test
     public void testVariableDefinitionAndUse() throws TypeErrorException {
@@ -33,10 +43,7 @@ public class TypecheckerScopeTest {
         // }
         final Stmt body = stmts(def(new IntType(), "x", new IntExp(0)),
                                 def(new IntType(), "y", new VariableExp(new Variable("x"))));
-        final FunctionDefinition fdef = new FunctionDefinition(new VoidType(),
-                                                               new FunctionName("foo"),
-                                                               EMPTY_VARDECS,
-                                                               body);
+        final FunctionDefinition fdef = voidFunction(body);
         final Program prog = new Program(EMPTY_STRUCTURES,
                                          new FunctionDefinition[]{fdef});
         Typechecker.typecheckProgram(prog);
@@ -48,10 +55,7 @@ public class TypecheckerScopeTest {
         //   int x = x;
         // }
         final Stmt body = stmts(def(new IntType(), "x", new VariableExp(new Variable("x"))));
-        final FunctionDefinition fdef = new FunctionDefinition(new VoidType(),
-                                                               new FunctionName("foo"),
-                                                               EMPTY_VARDECS,
-                                                               body);
+        final FunctionDefinition fdef = voidFunction(body);
         final Program prog = new Program(EMPTY_STRUCTURES,
                                          new FunctionDefinition[]{fdef});
         Typechecker.typecheckProgram(prog);
@@ -67,10 +71,7 @@ public class TypecheckerScopeTest {
                                 def(new PointerType(new IntType()),
                                     "y",
                                     new AddressOfExp(new VariableLhs(new Variable("x")))));
-        final FunctionDefinition fdef = new FunctionDefinition(new VoidType(),
-                                                               new FunctionName("foo"),
-                                                               EMPTY_VARDECS,
-                                                               body);
+        final FunctionDefinition fdef = voidFunction(body);
         final Program prog = new Program(EMPTY_STRUCTURES,
                                          new FunctionDefinition[]{fdef});
         Typechecker.typecheckProgram(prog);
@@ -92,10 +93,7 @@ public class TypecheckerScopeTest {
                                     new BinopExp(new VariableExp(new Variable("y")),
                                                  new PlusOp(),
                                                  new IntExp(3))));
-        final FunctionDefinition fdef = new FunctionDefinition(new VoidType(),
-                                                               new FunctionName("foo"),
-                                                               EMPTY_VARDECS,
-                                                               body);
+        final FunctionDefinition fdef = voidFunction(body);
         final Program prog = new Program(EMPTY_STRUCTURES,
                                          new FunctionDefinition[]{fdef});
         Typechecker.typecheckProgram(prog);
@@ -124,10 +122,7 @@ public class TypecheckerScopeTest {
                                                              new IntExp(7),
                                                              new CharExp('a')
                                                          })));
-        final FunctionDefinition fdef = new FunctionDefinition(new VoidType(),
-                                                               new FunctionName("foo"),
-                                                               EMPTY_VARDECS,
-                                                               body);
+        final FunctionDefinition fdef = voidFunction(body);
         final Program prog = new Program(new StructureDeclaration[]{sdef},
                                          new FunctionDefinition[]{fdef});
         Typechecker.typecheckProgram(prog);
@@ -175,10 +170,7 @@ public class TypecheckerScopeTest {
                                                              new CharExp('a'),
                                                              new CharExp('b')
                                                          })));
-        final FunctionDefinition fdef = new FunctionDefinition(new VoidType(),
-                                                               new FunctionName("foo"),
-                                                               EMPTY_VARDECS,
-                                                               body);
+        final FunctionDefinition fdef = voidFunction(body);
         final Program prog = new Program(new StructureDeclaration[]{sdef},
                                          new FunctionDefinition[]{fdef});
         Typechecker.typecheckProgram(prog);
@@ -207,10 +199,7 @@ public class TypecheckerScopeTest {
                                                              new CharExp('a'),
                                                              new IntExp(7)
                                                          })));
-        final FunctionDefinition fdef = new FunctionDefinition(new VoidType(),
-                                                               new FunctionName("foo"),
-                                                               EMPTY_VARDECS,
-                                                               body);
+        final FunctionDefinition fdef = voidFunction(body);
         final Program prog = new Program(new StructureDeclaration[]{sdef},
                                          new FunctionDefinition[]{fdef});
         Typechecker.typecheckProgram(prog);
@@ -244,10 +233,7 @@ public class TypecheckerScopeTest {
                                     "g",
                                     new FieldAccessExp(new VariableExp(new Variable("f")),
                                                        new FieldName("x"))));
-        final FunctionDefinition fdef = new FunctionDefinition(new VoidType(),
-                                                               new FunctionName("foo"),
-                                                               EMPTY_VARDECS,
-                                                               body);
+        final FunctionDefinition fdef = voidFunction(body);
         final Program prog = new Program(new StructureDeclaration[]{sdef},
                                          new FunctionDefinition[]{fdef});
         Typechecker.typecheckProgram(prog);
@@ -281,10 +267,7 @@ public class TypecheckerScopeTest {
                                     "g",
                                     new FieldAccessExp(new VariableExp(new Variable("f")),
                                                        new FieldName("z"))));
-        final FunctionDefinition fdef = new FunctionDefinition(new VoidType(),
-                                                               new FunctionName("foo"),
-                                                               EMPTY_VARDECS,
-                                                               body);
+        final FunctionDefinition fdef = voidFunction(body);
         final Program prog = new Program(new StructureDeclaration[]{sdef},
                                          new FunctionDefinition[]{fdef});
         Typechecker.typecheckProgram(prog);
@@ -318,10 +301,7 @@ public class TypecheckerScopeTest {
                                     "g",
                                     new AddressOfExp(new FieldAccessLhs(new VariableLhs(new Variable("f")),
                                                                         new FieldName("x")))));
-        final FunctionDefinition fdef = new FunctionDefinition(new VoidType(),
-                                                               new FunctionName("foo"),
-                                                               EMPTY_VARDECS,
-                                                               body);
+        final FunctionDefinition fdef = voidFunction(body);
         final Program prog = new Program(new StructureDeclaration[]{sdef},
                                          new FunctionDefinition[]{fdef});
         Typechecker.typecheckProgram(prog);
@@ -345,14 +325,11 @@ public class TypecheckerScopeTest {
                                    },
                                    new ReturnExpStmt(new IntExp(7)));
         final FunctionDefinition foo =
-            new FunctionDefinition(new VoidType(),
-                                   new FunctionName("foo"),
-                                   EMPTY_VARDECS,
-                                   new ExpStmt(new FunctionCallExp(new FunctionName("blah"),
-                                                                   new Exp[]{
-                                                                       new IntExp(7),
-                                                                       new CharExp('a')
-                                                                   })));
+            voidFunction(new ExpStmt(new FunctionCallExp(new FunctionName("blah"),
+                                                         new Exp[]{
+                                                             new IntExp(7),
+                                                             new CharExp('a')
+                                                         })));
         final Program prog = new Program(EMPTY_STRUCTURES,
                                          new FunctionDefinition[]{blah, foo});
         Typechecker.typecheckProgram(prog);
@@ -375,13 +352,10 @@ public class TypecheckerScopeTest {
                                    },
                                    new ReturnExpStmt(new IntExp(7)));
         final FunctionDefinition foo =
-            new FunctionDefinition(new VoidType(),
-                                   new FunctionName("foo"),
-                                   EMPTY_VARDECS,
-                                   new ExpStmt(new FunctionCallExp(new FunctionName("blah"),
-                                                                   new Exp[]{
-                                                                       new IntExp(7)
-                                                                   })));
+            voidFunction(new ExpStmt(new FunctionCallExp(new FunctionName("blah"),
+                                                         new Exp[]{
+                                                             new IntExp(7)
+                                                         })));
         final Program prog = new Program(EMPTY_STRUCTURES,
                                          new FunctionDefinition[]{blah, foo});
         Typechecker.typecheckProgram(prog);
@@ -405,15 +379,12 @@ public class TypecheckerScopeTest {
                                    },
                                    new ReturnExpStmt(new IntExp(7)));
         final FunctionDefinition foo =
-            new FunctionDefinition(new VoidType(),
-                                   new FunctionName("foo"),
-                                   EMPTY_VARDECS,
-                                   new ExpStmt(new FunctionCallExp(new FunctionName("blah"),
-                                                                   new Exp[]{
-                                                                       new IntExp(7),
-                                                                       new CharExp('a'),
-                                                                       new BoolExp(true)
-                                                                   })));
+            voidFunction(new ExpStmt(new FunctionCallExp(new FunctionName("blah"),
+                                                         new Exp[]{
+                                                             new IntExp(7),
+                                                             new CharExp('a'),
+                                                             new BoolExp(true)
+                                                         })));
         final Program prog = new Program(EMPTY_STRUCTURES,
                                          new FunctionDefinition[]{blah, foo});
         Typechecker.typecheckProgram(prog);
@@ -437,14 +408,11 @@ public class TypecheckerScopeTest {
                                    },
                                    new ReturnExpStmt(new IntExp(7)));
         final FunctionDefinition foo =
-            new FunctionDefinition(new VoidType(),
-                                   new FunctionName("foo"),
-                                   EMPTY_VARDECS,
-                                   new ExpStmt(new FunctionCallExp(new FunctionName("blah"),
-                                                                   new Exp[]{
-                                                                       new CharExp('a'),
-                                                                       new IntExp(7)
-                                                                   })));
+            voidFunction(new ExpStmt(new FunctionCallExp(new FunctionName("blah"),
+                                                         new Exp[]{
+                                                             new CharExp('a'),
+                                                             new IntExp(7)
+                                                         })));
         final Program prog = new Program(EMPTY_STRUCTURES,
                                          new FunctionDefinition[]{blah, foo});
         Typechecker.typecheckProgram(prog);
@@ -457,16 +425,32 @@ public class TypecheckerScopeTest {
         // }
 
         final FunctionDefinition foo =
-            new FunctionDefinition(new VoidType(),
-                                   new FunctionName("foo"),
-                                   EMPTY_VARDECS,
-                                   new ExpStmt(new FunctionCallExp(new FunctionName("blah"),
-                                                                   new Exp[]{
-                                                                       new IntExp(7),
-                                                                       new CharExp('a')
-                                                                   })));
+            voidFunction(new ExpStmt(new FunctionCallExp(new FunctionName("blah"),
+                                                         new Exp[]{
+                                                             new IntExp(7),
+                                                             new CharExp('a')
+                                                         })));
         final Program prog = new Program(EMPTY_STRUCTURES,
                                          new FunctionDefinition[]{foo});
         Typechecker.typecheckProgram(prog);
     }
+
+    @Test
+    public void testIfNormal() throws TypeErrorException {
+        // void foo() {
+        //   if (true) {
+        //     return;
+        //   } else {
+        //     return;
+        //   }
+        // }
+
+        final FunctionDefinition foo =
+            voidFunction(new IfStmt(new BoolExp(true),
+                                    new ReturnVoidStmt(),
+                                    new ReturnVoidStmt()));
+        final Program prog = new Program(EMPTY_STRUCTURES,
+                                         new FunctionDefinition[]{foo});
+        Typechecker.typecheckProgram(prog);
+    }   
 }
