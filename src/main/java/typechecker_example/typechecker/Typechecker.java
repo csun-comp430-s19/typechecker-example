@@ -165,7 +165,7 @@ public class Typechecker {
 
     // returns the return type
     private Type checkFunctionCall(final FunctionName name,
-                                  final Type[] parameterTypes) throws TypeErrorException {
+                                   final Type[] parameterTypes) throws TypeErrorException {
         final Pair<Type[], Type> expected = functionDefs.get(name);
 
         if (expected != null) {
@@ -455,6 +455,11 @@ public class Typechecker {
                 }
 
                 return fromLeft.first.typecheckStmt(asSeq.second);
+            } else if (stmt instanceof ExpStmt) {
+                // Just need to check that it's well-typed.  Permitted to
+                // return anything.
+                typeofExp(((ExpStmt)stmt).exp);
+                return new Pair<InScope, Boolean>(this, Boolean.valueOf(false));
             } else {
                 assert(false);
                 throw new TypeErrorException("Unrecognized statement: " + stmt.toString());

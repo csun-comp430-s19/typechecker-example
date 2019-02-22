@@ -40,7 +40,8 @@ stmt ::= if (exp) { stmt } else { stmt } |
          return | // return void
          return exp | // return a value
          free(exp) | // frees memory
-         stmt ; stmt // one statement followed by another
+         stmt ; stmt | // one statement followed by another
+         exp // expression statements (for calling functions with void return types)
 structDec ::= sn { varDec* }
 fDef ::= type fn(varDec*) { stmt }
 program ::= structDec* fDef*
