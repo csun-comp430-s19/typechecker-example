@@ -173,6 +173,4 @@ public class TypecheckerExpTest {
                                                new PlusOp(),
                                                new CharExp('a'))));
     }
-
-    // TODO: typecheck statements
 } // TypecheckerTest

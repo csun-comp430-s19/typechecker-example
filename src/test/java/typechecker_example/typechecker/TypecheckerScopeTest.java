@@ -147,6 +147,24 @@ public class TypecheckerScopeTest {
     }
 
     @Test(expected = TypeErrorException.class)
+    public void testStructureVoidField() throws TypeErrorException {
+        // Foo {
+        //   int x;
+        //   void y;
+        // };
+        final StructureName sname = new StructureName("Foo");
+        final StructureDeclaration sdef =
+            new StructureDeclaration(sname,
+                                     new VariableDeclaration[]{
+                                         new VariableDeclaration(new IntType(), new Variable("x")),
+                                         new VariableDeclaration(new VoidType(), new Variable("y"))
+                                     });
+        final Program prog = new Program(new StructureDeclaration[]{sdef},
+                                         EMPTY_FUNCTIONS);
+        Typechecker.typecheckProgram(prog);
+    }
+
+    @Test(expected = TypeErrorException.class)
     public void testStructureCreationTooManyParams() throws TypeErrorException {
         // Foo {
         //   int x;
@@ -332,6 +350,43 @@ public class TypecheckerScopeTest {
                                                          })));
         final Program prog = new Program(EMPTY_STRUCTURES,
                                          new FunctionDefinition[]{blah, foo});
+        Typechecker.typecheckProgram(prog);
+    }
+
+    @Test(expected = TypeErrorException.class)
+    public void testFunctionCallVoidParam() throws TypeErrorException {
+        // int blah(void x) {
+        //   return 7;
+        // }
+
+        final FunctionDefinition blah =
+            new FunctionDefinition(new IntType(),
+                                   new FunctionName("blah"),
+                                   new VariableDeclaration[]{
+                                       new VariableDeclaration(new VoidType(), new Variable("x"))
+                                   },
+                                   new ReturnExpStmt(new IntExp(7)));
+        final Program prog = new Program(EMPTY_STRUCTURES,
+                                         new FunctionDefinition[]{blah});
+        Typechecker.typecheckProgram(prog);
+    }
+
+    @Test
+    public void testFunctionCallVoidPointerParam() throws TypeErrorException {
+        // int blah(void* x) {
+        //   return 7;
+        // }
+
+        final FunctionDefinition blah =
+            new FunctionDefinition(new IntType(),
+                                   new FunctionName("blah"),
+                                   new VariableDeclaration[]{
+                                       new VariableDeclaration(new PointerType(new VoidType()),
+                                                               new Variable("x"))
+                                   },
+                                   new ReturnExpStmt(new IntExp(7)));
+        final Program prog = new Program(EMPTY_STRUCTURES,
+                                         new FunctionDefinition[]{blah});
         Typechecker.typecheckProgram(prog);
     }
 
@@ -624,7 +679,35 @@ public class TypecheckerScopeTest {
         Typechecker.typecheckProgram(prog);
     }
 
-    // variable declaration and initialization were handled earlier
+    @Test(expected = TypeErrorException.class)
+    public void testCannotMakeVoidLocalVariable() throws TypeErrorException {
+        // void foo() {
+        //   void x = malloc(1);
+        // }
+
+        final FunctionDefinition foo =
+            voidFunction(def(new VoidType(), "x", new MallocExp(new IntExp(1))));
+
+        final Program prog = new Program(EMPTY_STRUCTURES,
+                                         new FunctionDefinition[]{foo});
+        Typechecker.typecheckProgram(prog);
+    }        
+
+    @Test
+    public void testCanMakeVoidPointerLocalVariable() throws TypeErrorException {
+        // void foo() {
+        //   void* x = malloc(1);
+        // }
+
+        final FunctionDefinition foo =
+            voidFunction(def(new PointerType(new VoidType()),
+                             "x",
+                             new MallocExp(new IntExp(1))));
+
+        final Program prog = new Program(EMPTY_STRUCTURES,
+                                         new FunctionDefinition[]{foo});
+        Typechecker.typecheckProgram(prog);
+    }        
 
     @Test
     public void testAssignmentNormal() throws TypeErrorException {
@@ -676,4 +759,148 @@ public class TypecheckerScopeTest {
                                          new FunctionDefinition[]{foo});
         Typechecker.typecheckProgram(prog);
     }
+
+    @Test
+    public void testReturnNormal() throws TypeErrorException {
+        // void foo() {
+        //   return;
+        // }
+
+        final FunctionDefinition foo =
+            voidFunction(new ReturnVoidStmt());
+
+        final Program prog = new Program(EMPTY_STRUCTURES,
+                                         new FunctionDefinition[]{foo});
+        Typechecker.typecheckProgram(prog);
+    }
+
+    @Test(expected = TypeErrorException.class)
+    public void testReturnDuplicate() throws TypeErrorException {
+        // void foo() {
+        //   return;
+        //   return;
+        // }
+
+        final FunctionDefinition foo =
+            voidFunction(stmts(new ReturnVoidStmt(),
+                               new ReturnVoidStmt()));
+
+        final Program prog = new Program(EMPTY_STRUCTURES,
+                                         new FunctionDefinition[]{foo});
+        Typechecker.typecheckProgram(prog);
+    }
+
+    @Test(expected = TypeErrorException.class)
+    public void testReturnIfOnlyTrue() throws TypeErrorException {
+        // int foo() {
+        //   if (true) {
+        //     return 1;
+        //   } else {
+        //     1;
+        //   }
+        // }
+
+        final Stmt body =
+            new IfStmt(new BoolExp(true),
+                       new ReturnExpStmt(new IntExp(1)),
+                       new ExpStmt(new IntExp(1)));
+        
+        final FunctionDefinition foo =
+            new FunctionDefinition(new IntType(),
+                                   new FunctionName("foo"),
+                                   EMPTY_VARDECS,
+                                   body);
+
+        final Program prog = new Program(EMPTY_STRUCTURES,
+                                         new FunctionDefinition[]{foo});
+        Typechecker.typecheckProgram(prog);
+    }
+
+    @Test(expected = TypeErrorException.class)
+    public void testReturnIfOnlyFalse() throws TypeErrorException {
+        // int foo() {
+        //   if (true) {
+        //     1;
+        //   } else {
+        //     return 1;
+        //   }
+        // }
+
+        final Stmt body =
+            new IfStmt(new BoolExp(true),
+                       new ExpStmt(new IntExp(1)),
+                       new ReturnExpStmt(new IntExp(1)));
+        
+        final FunctionDefinition foo =
+            new FunctionDefinition(new IntType(),
+                                   new FunctionName("foo"),
+                                   EMPTY_VARDECS,
+                                   body);
+
+        final Program prog = new Program(EMPTY_STRUCTURES,
+                                         new FunctionDefinition[]{foo});
+        Typechecker.typecheckProgram(prog);
+    }
+
+    @Test
+    public void testReturnIfBothBranches() throws TypeErrorException {
+        // int foo() {
+        //   if (true) {
+        //     return 1;
+        //   } else {
+        //     return 2;
+        //   }
+        // }
+
+        final Stmt body =
+            new IfStmt(new BoolExp(true),
+                       new ReturnExpStmt(new IntExp(1)),
+                       new ReturnExpStmt(new IntExp(2)));
+        
+        final FunctionDefinition foo =
+            new FunctionDefinition(new IntType(),
+                                   new FunctionName("foo"),
+                                   EMPTY_VARDECS,
+                                   body);
+
+        final Program prog = new Program(EMPTY_STRUCTURES,
+                                         new FunctionDefinition[]{foo});
+        Typechecker.typecheckProgram(prog);
+    }
+
+    @Test
+    public void testFreeNormal() throws TypeErrorException {
+        // void foo() {
+        //   void* p = malloc(1);
+        //   free(p);
+        // }
+
+        final FunctionDefinition foo =
+            voidFunction(stmts(def(new PointerType(new VoidType()),
+                                   "p",
+                                   new MallocExp(new IntExp(1))),
+                               new FreeStmt(new VariableExp(new Variable("p")))));
+
+        final Program prog = new Program(EMPTY_STRUCTURES,
+                                         new FunctionDefinition[]{foo});
+        Typechecker.typecheckProgram(prog);
+    }
+
+    @Test(expected = TypeErrorException.class)
+    public void testFreeNonVoidPointer() throws TypeErrorException {
+        // void foo() {
+        //   int p = 1;
+        //   free(p);
+        // }
+
+        final FunctionDefinition foo =
+            voidFunction(stmts(def(new IntType(),
+                                   "p",
+                                   new IntExp(1)),
+                               new FreeStmt(new VariableExp(new Variable("p")))));
+
+        final Program prog = new Program(EMPTY_STRUCTURES,
+                                         new FunctionDefinition[]{foo});
+        Typechecker.typecheckProgram(prog);
+    }        
 }
