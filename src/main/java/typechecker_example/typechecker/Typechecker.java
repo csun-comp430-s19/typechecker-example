@@ -17,13 +17,26 @@ public class Typechecker {
     private final Map<FunctionName, Pair<Type[], Type>> functionDefs;
 
     private Typechecker(final Program program) throws TypeErrorException {
+        // have to load these before checking structure or function validity
         structDecs = makeStructMapping(program.structDecs);
+        ensureStructureFieldsValid();
+
         functionDefs = makeFunctionMapping(program.functionDefs);
+
         for (final FunctionDefinition def : program.functionDefs) {
             typecheckFunctionDef(def);
         }
     }
 
+    // makes sure that structure fields don't refer to non-existent structures
+    private void ensureStructureFieldsValid() throws TypeErrorException {
+        for (final LinkedHashMap<FieldName, Type> fields : structDecs.values()) {
+            for (final Type type : fields.values()) {
+                ensureValidType(type);
+            }
+        }
+    }
+    
     // intended for testing
     public static Type expTypeForTesting(final Exp exp) throws TypeErrorException {
         final Typechecker checker =
@@ -37,7 +50,7 @@ public class Typechecker {
     }
     
     // not permitted to have multiple functions with the same name
-    private static Map<FunctionName, Pair<Type[], Type>>
+    private Map<FunctionName, Pair<Type[], Type>>
         makeFunctionMapping(final FunctionDefinition[] functions) throws TypeErrorException {
 
         final Map<FunctionName, Pair<Type[], Type>> result =
@@ -58,11 +71,12 @@ public class Typechecker {
     }
 
     // throws exception if any are void
-    private static Type[] parameterTypes(final VariableDeclaration[] vars) throws TypeErrorException {
+    private Type[] parameterTypes(final VariableDeclaration[] vars) throws TypeErrorException {
         final Type[] result = new Type[vars.length];
 
         for (int index = 0; index < vars.length; index++) {
             final Type current = vars[index].type;
+            ensureValidType(current);
             ensureNonVoidType(current);
             result[index] = current;
         }
@@ -70,6 +84,17 @@ public class Typechecker {
         return result;
     }
 
+    // the user _can_ write an invalid type, e.g., reference a non-existent structure
+    private void ensureValidType(final Type type) throws TypeErrorException {
+        if (type instanceof StructureType) {
+            final StructureName name = ((StructureType)type).name;
+            if (!structDecs.containsKey(name)) {
+                throw new TypeErrorException("Non-existent structure referenced: " +
+                                             name.toString());
+            }
+        }
+    }
+            
     private static void ensureNonVoidType(final Type type) throws TypeErrorException {
         if (type instanceof VoidType) {
             throw new TypeErrorException("Void type illegal here");
@@ -144,7 +169,7 @@ public class Typechecker {
     }
     
     private void checkMakeStructure(final StructureName name,
-                                   final Type[] parameterTypes) throws TypeErrorException {
+                                    final Type[] parameterTypes) throws TypeErrorException {
         final LinkedHashMap<FieldName, Type> expected = structDecs.get(name);
 
         if (expected != null) {
@@ -256,7 +281,7 @@ public class Typechecker {
         }
 
         private InScope addVariable(final Variable variable,
-                                   final Type variableType) {
+                                    final Type variableType) {
             final Map<Variable, Type> copy =
                 new HashMap<Variable, Type>(inScope);
             copy.put(variable, variableType);
@@ -268,7 +293,7 @@ public class Typechecker {
         }
         
         private Type typeofAccess(final Type maybeStructureType,
-                                 final FieldName field) throws TypeErrorException {
+                                  final FieldName field) throws TypeErrorException {
             if (maybeStructureType instanceof StructureType) {
                 final StructureName name = ((StructureType)maybeStructureType).name;
                 final LinkedHashMap<FieldName, Type> expected = structDecs.get(name);
@@ -430,6 +455,7 @@ public class Typechecker {
                     (VariableDeclarationInitializationStmt)stmt;
                 final Type expectedType = dec.varDec.type;
                 ensureNonVoidType(expectedType);
+                ensureValidType(expectedType);
                 ensureTypesSame(expectedType,
                                 typeofExp(dec.exp));
                 final InScope resultInScope =
