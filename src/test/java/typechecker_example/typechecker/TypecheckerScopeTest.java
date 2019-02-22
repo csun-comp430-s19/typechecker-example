@@ -147,6 +147,23 @@ public class TypecheckerScopeTest {
     }
 
     @Test(expected = TypeErrorException.class)
+    public void testStructureDuplicateSturctureNames() throws TypeErrorException {
+        // Foo { int x; };
+        // Foo { int x; };
+
+        final StructureDeclaration sdef =
+            new StructureDeclaration(new StructureName("Foo"),
+                                     new VariableDeclaration[]{
+                                         new VariableDeclaration(new IntType(),
+                                                                 new Variable("x"))
+                                     });
+
+        final Program prog = new Program(new StructureDeclaration[]{sdef, sdef},
+                                         EMPTY_FUNCTIONS);
+        Typechecker.typecheckProgram(prog);
+    }
+    
+    @Test(expected = TypeErrorException.class)
     public void testStructureVoidField() throws TypeErrorException {
         // Foo {
         //   int x;
@@ -258,6 +275,26 @@ public class TypecheckerScopeTest {
     }
 
     @Test(expected = TypeErrorException.class)
+    public void testCreateNonexistentStructure() throws TypeErrorException {
+        // void foo() {
+        //   Foo f = Foo(1);
+        // }
+
+        final StructureName sname = new StructureName("Foo");
+        final FunctionDefinition foo =
+            voidFunction(def(new StructureType(sname),
+                             "f",
+                             new MakeStructureExp(sname,
+                                                  new Exp[]{
+                                                      new IntExp(1)
+                                                  })));
+
+        final Program prog = new Program(EMPTY_STRUCTURES,
+                                         new FunctionDefinition[]{foo});
+        Typechecker.typecheckProgram(prog);
+    }
+
+    @Test(expected = TypeErrorException.class)
     public void testStructureAccessNonexistentField() throws TypeErrorException {
         // Foo {
         //   int x;
@@ -354,7 +391,7 @@ public class TypecheckerScopeTest {
     }
 
     @Test(expected = TypeErrorException.class)
-    public void testFunctionCallVoidParam() throws TypeErrorException {
+    public void testFunctionDefinitionVoidParam() throws TypeErrorException {
         // int blah(void x) {
         //   return 7;
         // }
@@ -371,8 +408,26 @@ public class TypecheckerScopeTest {
         Typechecker.typecheckProgram(prog);
     }
 
+    @Test(expected = TypeErrorException.class)
+    public void testFunctionParameterNonexistentStructure() throws TypeErrorException {
+        // void foo(Foo f) { return; }
+
+        final FunctionDefinition foo =
+            new FunctionDefinition(new VoidType(),
+                                   new FunctionName("foo"),
+                                   new VariableDeclaration[]{
+                                       new VariableDeclaration(new StructureType(new StructureName("Foo")),
+                                                               new Variable("f"))
+                                   },
+                                   new ReturnVoidStmt());
+
+        final Program prog = new Program(EMPTY_STRUCTURES,
+                                         new FunctionDefinition[]{foo});
+        Typechecker.typecheckProgram(prog);
+    }
+        
     @Test
-    public void testFunctionCallVoidPointerParam() throws TypeErrorException {
+    public void testFunctionDefinitionVoidPointerParam() throws TypeErrorException {
         // int blah(void* x) {
         //   return 7;
         // }
@@ -390,6 +445,39 @@ public class TypecheckerScopeTest {
         Typechecker.typecheckProgram(prog);
     }
 
+    @Test(expected = TypeErrorException.class)
+    public void testFunctionDefinitionDuplicateFunctionNames() throws TypeErrorException {
+        // void foo() { return; }
+        // void foo() { return; }
+
+        final FunctionDefinition foo =
+            voidFunction(new ReturnVoidStmt());
+        
+        final Program prog = new Program(EMPTY_STRUCTURES,
+                                         new FunctionDefinition[]{foo, foo});
+        Typechecker.typecheckProgram(prog);
+    }
+
+    @Test(expected = TypeErrorException.class)
+    public void testFunctionDefinitionDuplicateParameterNames() throws TypeErrorException {
+        // void foo(int x, char x) { return; }
+
+        final FunctionDefinition foo =
+            new FunctionDefinition(new VoidType(),
+                                   new FunctionName("foo"),
+                                   new VariableDeclaration[]{
+                                       new VariableDeclaration(new IntType(),
+                                                               new Variable("x")),
+                                       new VariableDeclaration(new CharType(),
+                                                               new Variable("x"))
+                                   },
+                                   new ReturnVoidStmt());
+
+        final Program prog = new Program(EMPTY_STRUCTURES,
+                                         new FunctionDefinition[]{foo});
+        Typechecker.typecheckProgram(prog);
+    }
+        
     @Test(expected = TypeErrorException.class)
     public void testFunctionCallNotEnoughParams() throws TypeErrorException {
         // int blah(int x, char y) {
