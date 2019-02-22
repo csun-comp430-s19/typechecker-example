@@ -178,7 +178,7 @@ public class Typechecker {
                 throw new TypeErrorException("Function " + name.toString() +
                                              " has arity " + expected.first.length +
                                              "; was called with " +
-                                             expected.first.length + " parameters");
+                                             parameterTypes.length + " parameters");
             }
         } else {
             throw new TypeErrorException("No such function defined: " + name.toString());
