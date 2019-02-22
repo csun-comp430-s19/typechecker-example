@@ -78,6 +78,47 @@ public class TypecheckerScopeTest {
     }
 
     @Test
+    public void testPointerDereferenceRhs() throws TypeErrorException {
+        // void foo() {
+        //   int x = 0;
+        //   int* p = &x;
+        //   int y = *p;
+        // }
+
+        final Stmt body = stmts(def(new IntType(), "x", new IntExp(0)),
+                                def(new PointerType(new IntType()),
+                                    "p",
+                                    new AddressOfExp(new VariableLhs(new Variable("x")))),
+                                def(new IntType(),
+                                    "y",
+                                    new DereferenceExp(new VariableExp(new Variable("p")))));
+        final FunctionDefinition fdef = voidFunction(body);
+        final Program prog = new Program(EMPTY_STRUCTURES,
+                                         new FunctionDefinition[]{fdef});
+        Typechecker.typecheckProgram(prog);
+    }
+
+    @Test
+    public void testPointerDereferenceLhs() throws TypeErrorException {
+        // void foo() {
+        //   int x = 0;
+        //   int* p = &x;
+        //   *p = 7;
+        // }
+
+        final Stmt body = stmts(def(new IntType(), "x", new IntExp(0)),
+                                def(new PointerType(new IntType()),
+                                    "p",
+                                    new AddressOfExp(new VariableLhs(new Variable("x")))),
+                                new AssignmentStmt(new DereferenceLhs(new VariableLhs(new Variable("p"))),
+                                                   new IntExp(7)));
+        final FunctionDefinition fdef = voidFunction(body);
+        final Program prog = new Program(EMPTY_STRUCTURES,
+                                         new FunctionDefinition[]{fdef});
+        Typechecker.typecheckProgram(prog);
+    }
+
+    @Test
     public void testAddPointer() throws TypeErrorException {
         // void foo() {
         //   int x = 0;
@@ -147,7 +188,7 @@ public class TypecheckerScopeTest {
     }
 
     @Test(expected = TypeErrorException.class)
-    public void testStructureDuplicateSturctureNames() throws TypeErrorException {
+    public void testStructureDuplicateStructureNames() throws TypeErrorException {
         // Foo { int x; };
         // Foo { int x; };
 
@@ -162,7 +203,23 @@ public class TypecheckerScopeTest {
                                          EMPTY_FUNCTIONS);
         Typechecker.typecheckProgram(prog);
     }
-    
+
+    @Test(expected = TypeErrorException.class)
+    public void testStructureNonExistentStructureField() throws TypeErrorException {
+        // Foo { Bar x; }
+
+        final StructureDeclaration sdef =
+            new StructureDeclaration(new StructureName("Foo"),
+                                     new VariableDeclaration[]{
+                                         new VariableDeclaration(new StructureType(new StructureName("Bar")),
+                                                                 new Variable("x"))
+                                     });
+
+        final Program prog = new Program(new StructureDeclaration[]{sdef},
+                                         EMPTY_FUNCTIONS);
+        Typechecker.typecheckProgram(prog);
+    }
+
     @Test(expected = TypeErrorException.class)
     public void testStructureVoidField() throws TypeErrorException {
         // Foo {
@@ -274,6 +331,39 @@ public class TypecheckerScopeTest {
         Typechecker.typecheckProgram(prog);
     }
 
+    @Test
+    public void testNormalStructureFieldAssignment() throws TypeErrorException {
+        // Foo {
+        //   int x;
+        //   char y;
+        // };
+        // void foo() {
+        //   Foo f = Foo(7, 'a');
+        //   f.x = 8;
+        // }
+        final StructureName sname = new StructureName("Foo");
+        final StructureDeclaration sdef =
+            new StructureDeclaration(sname,
+                                     new VariableDeclaration[]{
+                                         new VariableDeclaration(new IntType(), new Variable("x")),
+                                         new VariableDeclaration(new CharType(), new Variable("y"))
+                                     });
+        final Stmt body = stmts(def(new StructureType(sname),
+                                    "f",
+                                    new MakeStructureExp(sname,
+                                                         new Exp[]{
+                                                             new IntExp(7),
+                                                             new CharExp('a')
+                                                         })),
+                                new AssignmentStmt(new FieldAccessLhs(new VariableLhs(new Variable("f")),
+                                                                      new FieldName("x")),
+                                                   new IntExp(8)));
+        final FunctionDefinition fdef = voidFunction(body);
+        final Program prog = new Program(new StructureDeclaration[]{sdef},
+                                         new FunctionDefinition[]{fdef});
+        Typechecker.typecheckProgram(prog);
+    }
+
     @Test(expected = TypeErrorException.class)
     public void testCreateNonexistentStructure() throws TypeErrorException {
         // void foo() {
@@ -328,6 +418,20 @@ public class TypecheckerScopeTest {
         Typechecker.typecheckProgram(prog);
     }
 
+    @Test(expected = TypeErrorException.class)
+    public void testStructureAccessNonStructure() throws TypeErrorException {
+        // void foo() {
+        //   1.bar;
+        // }
+
+        final FunctionDefinition foo =
+            voidFunction(new ExpStmt(new FieldAccessExp(new IntExp(1),
+                                                        new FieldName("bar"))));
+        final Program prog = new Program(EMPTY_STRUCTURES,
+                                         new FunctionDefinition[]{foo});
+        Typechecker.typecheckProgram(prog);
+    }
+        
     @Test
     public void testNormalStructurePointerToField() throws TypeErrorException {
         // Foo {
@@ -779,8 +883,8 @@ public class TypecheckerScopeTest {
         final Program prog = new Program(EMPTY_STRUCTURES,
                                          new FunctionDefinition[]{foo});
         Typechecker.typecheckProgram(prog);
-    }        
-
+    }
+        
     @Test
     public void testCanMakeVoidPointerLocalVariable() throws TypeErrorException {
         // void foo() {
@@ -824,6 +928,23 @@ public class TypecheckerScopeTest {
         final FunctionDefinition foo =
             voidFunction(stmts(def(new IntType(), "x", new IntExp(7)),
                                new AssignmentStmt(new VariableLhs(new Variable("y")),
+                                                  new IntExp(8))));
+
+        final Program prog = new Program(EMPTY_STRUCTURES,
+                                         new FunctionDefinition[]{foo});
+        Typechecker.typecheckProgram(prog);
+    }
+
+    @Test(expected = TypeErrorException.class)
+    public void testAssignmentNonPointerDereferenceLhs() throws TypeErrorException {
+        // void foo() {
+        //   int x = 7;
+        //   *x = 8;
+        // }
+
+        final FunctionDefinition foo =
+            voidFunction(stmts(def(new IntType(), "x", new IntExp(7)),
+                               new AssignmentStmt(new DereferenceLhs(new VariableLhs(new Variable("x"))),
                                                   new IntExp(8))));
 
         final Program prog = new Program(EMPTY_STRUCTURES,
